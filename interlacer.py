@@ -23,7 +23,7 @@ def parse_args(args):
 
     parser = argparse.ArgumentParser(prog="interlacer",
                                      description="""Interlace two videos into one cronologically
-    and alternating for use with active 3d movies""")
+                                            and alternating for use with active 3d movies""")
     
     parser.add_argument(
         "-in", type=str, help='Input folders (should be two)', nargs="+")
@@ -49,8 +49,15 @@ def generate_images(inp, out, frate=30, formt="jpg"):
     lg.info(output)
 
 
+
+def move_all(infol1,infol2,outfol):
+    pass 
+
+
 def create_video(inf, outfile):
-    pass
+    command = """ffmpeg -start_number 0 -i "{}/%7d.jpg" -c:v libx264 -vf "fps=25,format=yuv420p"  {}"""
+    _, output = subprocess.getstatusoutput(command.format(inf,outfile))
+    lg.debug(output)
 
 odd = lambda: itertools.count(1, 2)
 even = lambda: itertools.count(0, 2)
