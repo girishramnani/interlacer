@@ -3,6 +3,7 @@ import itertools
 import logging as lg
 import os
 import subprocess
+import shutil
 
 lg.basicConfig(format='%(levelname)s:%(message)s ', level=lg.DEBUG)
 
@@ -16,8 +17,10 @@ def test_ffmpeg():
 
 
 def mkdir(directory):
-    os.mkdir(directory)  # we dont care if it fails.
-
+    try:
+        os.mkdir(directory)  # we dont care if it fails.
+    except FileExistsError:
+        lg.debug("The folder already exists")
 
 def parse_args(args):
 
@@ -49,14 +52,26 @@ def generate_images(inp, out, frate=30, formt="jpg"):
     lg.info(output)
 
 
+def move_dir(folder,outfolder):
+    for file in os.listdir(folder):
+        lg.debug("Moving the file to {}/{}".format(outfolder,file))
+        shutil.move("{}/{}".format(folder,file),"{}/{}".format(outfolder,file))
 
-def move_all(infol1,infol2,outfol):
-    pass 
 
 
-def create_video(inf, outfile):
-    command = """ffmpeg -start_number 0 -i "{}/%7d.jpg" -c:v libx264 -vf "fps=25,format=yuv420p"  {}"""
-    _, output = subprocess.getstatusoutput(command.format(inf,outfile))
+
+def move_all(infol1,infol2,outfol,delete=True):
+    mkdir(outfol)
+    move_dir(infol1,outfol)
+    move_dir(infol2,outfol)
+    if delete:
+        os.rmdir(infol1)
+        os.rmdir(infol2)
+
+def create_video(inf, outfile,**kwargs):
+    fps = kwargs.get("fps") if kwargs.get("fps") != None else 30 
+    command = """ffmpeg -start_number 0 -i "{}/%7d.jpg" -c:v libx264 -vf "fps={},format=yuv420p"  {}"""
+    _, output = subprocess.getstatusoutput(command.format(inf,fps,outfile))
     lg.debug(output)
 
 odd = lambda: itertools.count(1, 2)
@@ -64,7 +79,9 @@ even = lambda: itertools.count(0, 2)
 
 if __name__ == "__main__":
     test_ffmpeg()
-    generate_images("1.mp4","output3")
-    generate_images("2.mp4","output4")
-    rename_folders("output3",odd())
-    rename_folders("output4",even())
+    # generate_images("1.mp4","output3")
+    # generate_images("2.mp4","output4")
+    # rename_folders("output3",odd())
+    # rename_folders("output4",even())
+    # move_all("output3","output4","output5",delete=False)
+    create_video("output5","video120.mp4",fps=120)
